@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package api.account.v1;
+
+import "google/protobuf/descriptor.proto";
+import "errors/errors.proto";
+
+option go_package = "api/account/v1;v1";
+
+//业务错误码
+enum ErrorReason {
+
+    // 设置缺省错误码
+    option (errors.default_code) = 500;
+    UNKNOW = 0 [(errors.code) = 500];
+
+    //账号密码错误
+    AccountPwdError = 50 [(errors.code) = 50];
+
+    //验证码错误
+    CaptchaError = 51 [ (errors.code) = 51 ];
+}
+
