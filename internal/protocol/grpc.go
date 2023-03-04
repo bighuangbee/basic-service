@@ -23,7 +23,7 @@ func NewGRPCServer(bc *conf.Bootstrap, logger log.Logger, services *PbServer) *g
 		grpc.Middleware(
 			recovery.Recovery(),
 			logging.Server(logger),
-			validate(),
+			//validate(),  //todo
 		),
 		grpc.Logger(logger),
 	)

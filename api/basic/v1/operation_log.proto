@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package api.basic.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/descriptor.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "api/basic/v1/common.proto";
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/bighuangbee/basic-service/api/basic/v1;v1";
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+    info: {
+      title: "操作日志",
+      version: "1.0",
+      description: "操作日志"
+    }
+    host: ""
+};
+
+service OperationLog {
+    // 增加操作日志.
+    rpc Add(AddRequest) returns (AddReply) {
+        option (google.api.http) = {
+            post : "/api/v1/operation-log",
+            body : "*"
+        };
+    }
+    // 查询操作日志.
+    rpc ListOperationLog(ListOperationLogRequest) returns (ListOperationLogReply) {
+        option (google.api.http) = {
+            get : "/api/v1/operation-log",
+        };
+    }
+    // 操作日志操作人搜索.
+    rpc ListOperationLogUser(ListOperationLogUserRequest) returns (ListOperationLogUserReply) {
+        option (google.api.http) = {
+            get : "/api/v1/operation-log/user",
+        };
+    }
+}
+
+message ListOperationLogUserRequest{
+    string userName =1;
+}
+
+message ListOperationLogUserReply{
+    message User{
+        int32 userId = 1;
+        string userName = 2;
+    }
+    repeated User items = 1;
+}
+
+message ListOperationLogRequest {
+    // 分页
+    PageArg page = 1;
+    // 操作人ID
+    uint32 userId = 2;
+    // 企业ID
+    uint32 corpId = 3;
+    // 操作时间-开始
+    google.protobuf.Timestamp operateStartAt = 4;
+    // 操作时间-结束
+    google.protobuf.Timestamp operateEndAt = 5;
+    // 应用ID
+    uint32 appId = 6;
+    // 操作名称
+    string operationName = 7;
+    // 状态.
+    repeated Log.LogStatus status = 8;
+}
+
+message ListOperationLogReply {
+    repeated Log items = 1;
+    int32 total = 2;
+}
+
+message Log {
+    enum LogStatus {
+        Success = 0;
+        Failure = 1;
+    }
+    int32 id = 1;
+    int32 appId = 2;
+    int32 corpId = 3;
+    string corpName = 4;
+    int32 userId = 5;
+    string userName = 6;
+    // 操作名称.
+    string operationName = 7;
+    // 操作的模块.
+    string operationModule = 10;
+    // 变更前.
+    string before = 17;
+    // 变更后.
+    string after = 18;
+    // 自定义详细内容.
+    string detail = 19;
+    // 操作时间.
+    google.protobuf.Timestamp timestamp = 20;
+    // 数据库创建时间.
+    google.protobuf.Timestamp creatAt = 21;
+    // 状态.
+    LogStatus status = 22;
+    // 请求失败原因.
+    string reason = 23;
+    // SN号.
+    string snNo = 24;
+}
+
+message AddRequest {
+    Log log = 1;
+}
+
+message AddReply {}

@@ -3,6 +3,7 @@ package protocol
 import (
 	"github.com/bighuangbee/basic-service/internal/conf"
 	"github.com/bighuangbee/basic-service/internal/data"
+	"github.com/bighuangbee/basic-service/internal/pkg/middleware"
 	kitKratos "github.com/bighuangbee/gokit/kratos"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/logging"
@@ -14,7 +15,7 @@ import (
 )
 
 // NewHTTPServer new a HTTP server.
-func NewHTTPServer(bc *conf.Bootstrap, logger log.Logger, server *PbServer, data *data.Data) *http.Server {
+func NewHTTPServer(bc *conf.Bootstrap, logger log.Logger, server *PbServer, data *data.Data, opLog *middleware.OpLog) *http.Server {
 	// 不需要验证token的地址
 	//checkTokenWhiteList := []string{
 	//	"/api.mozi.device.v1.Device/SyncWvp",
@@ -29,11 +30,10 @@ func NewHTTPServer(bc *conf.Bootstrap, logger log.Logger, server *PbServer, data
 			tracing.Server(),
 			logging.Server(logger),
 			validate(),
-			//opLogCli.SaveOpLog(),
+			opLog.Middleware(),
 			//hiKratos.HTTPReturnTraceID(),
 		),
 
-		http.Logger(logger),
 		kitKratos.SuccessEncoder(),
 		kitKratos.ErrorEncoder(),
 	)

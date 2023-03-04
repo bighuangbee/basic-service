@@ -5,7 +5,7 @@ import (
 	pb "github.com/bighuangbee/basic-service/api/account/v1"
 	"github.com/bighuangbee/basic-service/internal/conf"
 	"github.com/bighuangbee/basic-service/internal/domain"
-	basicPb "github.com/bighuangbee/gokit/api/basic/v1"
+	commonPb "github.com/bighuangbee/gokit/api/common/v1"
 	kitKratos "github.com/bighuangbee/gokit/kratos"
 	"github.com/go-kratos/kratos/v2/log"
 )
@@ -28,7 +28,7 @@ func (this *AccountService) Login(ctx context.Context, req *pb.LoginReq) (*pb.Lo
 
 	if req.Username == "" {
 		//return nil, errors.New("123c")
-		return nil, kitKratos.ResponseErr(ctx, basicPb.ErrorInvalidParameter)
+		return nil, kitKratos.ResponseErr(ctx, commonPb.ErrorInvalidParameter)
 	}
 
 	return nil, kitKratos.ResponseErr(ctx, pb.ErrorAccountPwdError)

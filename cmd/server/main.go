@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/bighuangbee/basic-service/internal/conf"
+	"github.com/bighuangbee/basic-service/internal/pkg/middleware"
 	kitLog "github.com/bighuangbee/gokit/log"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2"
@@ -17,12 +18,13 @@ import (
 	"go.uber.org/zap/zapcore"
 	grpcDial "google.golang.org/grpc"
 	_ "net/http/pprof"
+	"path"
 	"time"
 )
 
 var flagConf string
 
-func newApp(bc *conf.Bootstrap, logger log.Logger, hs *http.Server, gs *grpc.Server) *kratos.App {
+func newApp(bc *conf.Bootstrap, logger log.Logger, hs *http.Server, gs *grpc.Server, opLog *middleware.OpLog) *kratos.App {
 	var registrar registry.Registrar
 	if bc.Discovery.OnOff {
 		client, err := clientv3.New(clientv3.Config{
@@ -43,6 +45,7 @@ func newApp(bc *conf.Bootstrap, logger log.Logger, hs *http.Server, gs *grpc.Ser
 		kratos.Logger(logger),
 		kratos.Server(hs, gs),
 		kratos.Registrar(registrar),
+		kratos.AfterStart(opLog.AfterStartOpLogGrpcConn()),
 	)
 }
 
@@ -65,7 +68,7 @@ func main() {
 		Level:       zapcore.DebugLevel,
 		Skip:        2,
 		Writer:      kitLog.NewFileWriter(&kitLog.FileOption{
-			Filename: "/opt/logs/account-svc/%Y-%m-%d.log",
+			Filename: "/opt/logs/basic-service/%Y-%m-%d.log",
 			MaxSize:  20,
 		}),
 	})
@@ -73,7 +76,9 @@ func main() {
 
 	logHelper := log.NewHelper(logger)
 
-	app, cleanup, err := autoWireApp(bc, logger, logHelper)
+	opLog := middleware.NewOpLog(path.Dir(flagConf)+"/proto/", bc.MicroService.OpLog.Grpc, logger)
+
+	app, cleanup, err := autoWireApp(bc, logger, logHelper, opLog)
 	if err != nil {
 		panic(err)
 	}

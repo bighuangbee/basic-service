@@ -18,10 +18,10 @@ metrics:
 
 server:
   http:
-    addr: 0.0.0.0:6001
+    addr: 0.0.0.0:1601
     timeout: 10
   grpc:
-    addr: 0.0.0.0:6101
+    addr: 0.0.0.0:1501
     timeout: 10
   nodeId: 0
 
@@ -36,18 +36,24 @@ data:
     db: 11
     autoPrefix: "mozi:"
   database:
-    address: "192.168.18.66:23306" #测试
+    address: "192.168.20.65:23306" #盒子开发
     username: "root"
     password: "Hiscene2022"
-    dbName: "hiar_mozi_device"
+    dbName: "hiar_mozi_setting"
     timeout: 5
-
 
 httpEndpoint:
   addr: "localhost:18109"
 
-
 mqtt:
-  server: "192.168.18.66:1883" #测试
+  server: "192.168.20.65:1883" #测试
   subTopicDeviceUpdate: "MOZI/deviceUpdate1"
   subTopicChannelUpdate: "MOZI/channelUpdate1"
+
+# micro server列表
+microService:
+  opLog:
+    name :  "op-log.grpc"
+    timeout :  60
+    grpc :  "localhost:1501"
+    isLocal:  true

@@ -12,6 +12,10 @@ import (
 	"github.com/bighuangbee/basic-service/internal/module/account/app"
 	"github.com/bighuangbee/basic-service/internal/module/account/repo"
 	"github.com/bighuangbee/basic-service/internal/module/account/service"
+	app2 "github.com/bighuangbee/basic-service/internal/module/operationLog/app"
+	repo2 "github.com/bighuangbee/basic-service/internal/module/operationLog/repo"
+	service2 "github.com/bighuangbee/basic-service/internal/module/operationLog/service"
+	"github.com/bighuangbee/basic-service/internal/pkg/middleware"
 	"github.com/bighuangbee/basic-service/internal/protocol"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
@@ -23,7 +27,7 @@ import (
 
 // Injectors from wire.go:
 
-func autoWireApp(bootstrap *conf.Bootstrap, logger log.Logger, helper *log.Helper) (*kratos.App, func(), error) {
+func autoWireApp(bootstrap *conf.Bootstrap, logger log.Logger, helper *log.Helper, opLog *middleware.OpLog) (*kratos.App, func(), error) {
 	dataData, cleanup, err := data.NewData(bootstrap, logger)
 	if err != nil {
 		return nil, nil, err
@@ -31,12 +35,16 @@ func autoWireApp(bootstrap *conf.Bootstrap, logger log.Logger, helper *log.Helpe
 	iAccountRepo := repo.NewAccountRepo(dataData, helper, bootstrap)
 	accountService := service.NewAccountService(iAccountRepo, logger, bootstrap)
 	accountServer := app.NewAccountApp(accountService, helper)
+	iOperationLogRepo := repo2.NewOperationLogRepo(dataData)
+	operationLogService := service2.NewOperationLogService(iOperationLogRepo, logger)
+	operationLogServer := app2.NewOperationLogApp(operationLogService, logger)
 	pbServer := &protocol.PbServer{
 		Account: accountServer,
+		OpLog:   operationLogServer,
 	}
-	server := protocol.NewHTTPServer(bootstrap, logger, pbServer, dataData)
+	server := protocol.NewHTTPServer(bootstrap, logger, pbServer, dataData, opLog)
 	grpcServer := protocol.NewGRPCServer(bootstrap, logger, pbServer)
-	kratosApp := newApp(bootstrap, logger, server, grpcServer)
+	kratosApp := newApp(bootstrap, logger, server, grpcServer, opLog)
 	return kratosApp, func() {
 		cleanup()
 	}, nil

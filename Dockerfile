@@ -22,7 +22,9 @@ WORKDIR /app
 
 COPY --from=build /go/release/srv-bin /app/
 COPY config/i18n /app/conf/i18n
-COPY api/mozi/device/v1/*.proto /app/conf/proto/
+
+#复制proto文件
+COPY api/mozi/account/v1/*.proto /app/conf/proto/
 
 RUN mkdir -p /app/conf
 

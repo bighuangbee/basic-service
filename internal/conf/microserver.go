@@ -1,14 +1,17 @@
 package conf
 
-type CloudCore struct {
-	HTTP string
-	Grpc string
+type MicroService struct {
+	OpLog    *ServiceInfo
+	Etcd    Etcd
 }
 
-type MicroService struct {
-	CloudCore CloudCore
-	Etcd      Etcd
+type ServiceInfo struct {
+	Name    string
+	Timeout int32
+	Grpc    string
+	IsLocal bool
 }
+
 type Etcd struct {
 	Addr []string
 }

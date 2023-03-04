@@ -19,7 +19,6 @@ type Bootstrap struct {
 type Data struct {
 	Database  *Database
 	Redis     *Redis
-	CloudCore *CloudCore
 }
 
 type Metrics struct {
