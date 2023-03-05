@@ -9,6 +9,7 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/logging"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
+	"github.com/go-kratos/kratos/v2/middleware/validate"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/go-kratos/swagger-api/openapiv2"
 	"time"
@@ -29,7 +30,7 @@ func NewHTTPServer(bc *conf.Bootstrap, logger log.Logger, server *PbServer, data
 			recovery.Recovery(),
 			tracing.Server(),
 			logging.Server(logger),
-			validate(),
+			validate.Validator(),
 			opLog.Middleware(),
 			//hiKratos.HTTPReturnTraceID(),
 		),

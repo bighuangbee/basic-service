@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	pbBasic "github.com/bighuangbee/basic-service/api/basic/v1"
 	pb "github.com/bighuangbee/gokit/api/common/v1"
 	"github.com/bighuangbee/gokit/model"
@@ -13,8 +12,10 @@ import (
 	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"math"
 	"net"
 	nhttp "net/http"
+	"strconv"
 	"strings"
 )
 
@@ -131,23 +132,22 @@ func (r *OpLog) Middleware() middleware.Middleware {
 				}
 
 				if token := tr.RequestHeader().Get("jwtToken"); token != "" {
-					//jwtToken, err := jwtToken.NewJwtTokenByParse(token, jwtTokenKey)
-					//if err != nil {
-					//	log.NewHelper(t.Logger).Errorw("NewJwtTokenByParse err", err)
-					//} else {
-					//	corpIdInt, _ := strconv.Atoi(jwtToken.Data["corpId"].(string))
-					//	corpId = uint64(corpIdInt)
-					//	userIdF := jwtToken.Data["userId"].(float64)
-					//	userId = uint64(math.Ceil(userIdF))
-					//	userName = jwtToken.Data["userName"].(string)
-					//	account = jwtToken.Data["account"].(string)
-					//}
+					jwtToken, err := jwtToken.NewJwtTokenByParse(token, jwtTokenKey)
+					if err != nil {
+						log.NewHelper(t.Logger).Errorw("NewJwtTokenByParse err", err)
+					} else {
+						corpIdInt, _ := strconv.Atoi(jwtToken.Data["corpId"].(string))
+						corpId = uint64(corpIdInt)
+						userIdF := jwtToken.Data["userId"].(float64)
+						userId = uint64(math.Ceil(userIdF))
+						userName = jwtToken.Data["userName"].(string)
+						account = jwtToken.Data["account"].(string)
+					}
 				}
 				userAgent := tr.RequestHeader().Get("User-Agent")
 
-				fmt.Println("----uriTitleMap[method+\"_\"+uri]", uriTitleMap[method+"_"+uri])
 				if v, ok := uriTitleMap[method+"_"+uri]; ok {
-					sysLog := &model.SysLogRpc{
+					details, _ := json.Marshal(&model.SysLogRpc{
 						CorpId:    corpId,
 						UserId:    uint32(userId),
 						Name:      userName,
@@ -158,33 +158,26 @@ func (r *OpLog) Middleware() middleware.Middleware {
 						UrlTitle:  v.Title,
 						Params:    bodyStr,
 						UserAgent: userAgent,
+					})
+					operationName := getLogTypeStr(v.LogType)
+
+					now := timestamppb.Now()
+					if _, err := r.OpGrpcCli.Add(ctx, &pbBasic.AddRequest{
+						Log: &pbBasic.Log{
+							AppId:         0,
+							CorpId:        int32(corpId),
+							UserId:        int32(userId),
+							UserName:      userName,
+							OperationName: operationName,
+							Detail:        string(details),
+							Timestamp:     now,
+							CreatAt:       now,
+						},
+					}); err != nil {
+						r.Logger.Log(log.LevelError, "创建操作日志失败 OpGrpcCli.Add", err)
 					}
 
-
-						bs, _ := json.Marshal(sysLog)
-						now := timestamppb.Now()
-
-						operationName := getLogTypeStr(sysLog.Type)
-
-						reqCloudCore := &pbBasic.AddRequest{}
-						logInfo := &pbBasic.Log{
-						AppId:         0,
-						CorpId:        int32(corpId),
-						UserId:        int32(userId),
-						UserName:      userName,
-						OperationName: operationName,
-						Detail:        string(bs),
-						Timestamp:     now,
-						CreatAt:       now,
-					}
-						reqCloudCore.Log = logInfo
-						_, err := r.OpGrpcCli.Add(ctx, reqCloudCore)
-						if err != nil {
-						log.NewHelper(r.Logger).Errorw("创建操作日志失败 OpGrpcCli.Add", err)
-					}
-
-
-					r.Logger.Log(log.LevelInfo, "method", method, "uri", uri, "title", sysLog.Type, "logType", v.LogType, "logType", operationName, "corpId", corpId, "userId", userId, "userName", userName, "account", account, "ip", ip, "payload", bodyStr)
+					r.Logger.Log(log.LevelInfo, "method", method, "uri", uri, "title", v.LogType, "logType", v.LogType, "logType", operationName, "corpId", corpId, "userId", userId, "userName", userName, "account", account, "ip", ip, "payload", bodyStr)
 				}
 				return handler(ctx, req)
 			}

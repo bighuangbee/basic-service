@@ -13,7 +13,6 @@ type Bootstrap struct {
 	HttpEndpoint *HttpEndpoint
 	MQTT         *MQTTServer
 	SysConf map[string]map[string]interface{}
-	OpLog   *OpLog
 }
 
 type Data struct {
@@ -76,10 +75,3 @@ type MQTTServer struct {
 	PubTopoicChanCalib    string
 }
 
-
-type OpLog struct {
-	// cloud core的地址
-	OpLogGrpcAddr string
-	// mozi Settings 服务的地址
-	SettingsServiceHttpAddr string
-}
